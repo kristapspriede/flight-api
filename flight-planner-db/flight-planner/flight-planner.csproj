@@ -48,6 +48,12 @@
     <Reference Include="Elasticsearch.Net, Version=7.0.0.0, Culture=neutral, PublicKeyToken=96c599bbe3e70f5d, processorArchitecture=MSIL">
       <HintPath>..\packages\Elasticsearch.Net.7.3.0\lib\net461\Elasticsearch.Net.dll</HintPath>
     </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Nest, Version=7.0.0.0, Culture=neutral, PublicKeyToken=96c599bbe3e70f5d, processorArchitecture=MSIL">
       <HintPath>..\packages\NEST.7.3.0\lib\net461\Nest.dll</HintPath>
@@ -178,7 +184,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AirportRequest.cs" />
-    <Compile Include="Models\Flight.cs" />
+    <Compile Include="Controllers\BaseApiController.cs" />
+    <Compile Include="Models\FlightRequest.cs" />
     <Compile Include="Models\FlightSearchRequest.cs" />
     <Compile Include="Models\FlightSearchResult.cs" />
     <Compile Include="Models\FlightStorage.cs" />
@@ -266,6 +273,16 @@
     <None Include="packages.config" />
     <Content Include="Scripts\jquery-3.3.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.3.1.min.map" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\flight-planner.core\flight-planner.core.csproj">
+      <Project>{ae3b6590-a176-45d8-9498-5bef35ae500d}</Project>
+      <Name>flight-planner.core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\flight-planner.services\flight-planner.services.csproj">
+      <Project>{0f182edc-6cc1-414f-ac98-b06b699465af}</Project>
+      <Name>flight-planner.services</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

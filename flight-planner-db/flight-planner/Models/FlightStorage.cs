@@ -10,17 +10,17 @@ namespace flight_planner.Models
     {
         private static readonly Object obj = new Object();
         private static int _id;
-        private static SynchronizedCollection<Flight> _flights { get; set; }
+        private static SynchronizedCollection<FlightRequest> _flights { get; set; }
         static FlightStorage()
         {
-            _flights = new SynchronizedCollection<Flight>();
+            _flights = new SynchronizedCollection<FlightRequest>();
             _id = 1;
 
         }
         
 
 
-        public static bool AddFlight(Flight flight)
+        public static bool AddFlight(FlightRequest flight)
         {
             lock (obj) {
                 if (!_flights.Any(f => f.Equals(flight)))
@@ -32,7 +32,7 @@ namespace flight_planner.Models
             }
                
         }
-        public static void RemoveFlight(Flight flight)
+        public static void RemoveFlight(FlightRequest flight)
         {
             _flights.Remove(flight);
         }
@@ -48,7 +48,7 @@ namespace flight_planner.Models
                 _flights.Remove(flight);
             }
         }
-        public static Flight GetFlightById(int id)
+        public static FlightRequest GetFlightById(int id)
         {
             lock (obj)
             {
@@ -59,7 +59,7 @@ namespace flight_planner.Models
         {
             return _id++;
         }
-        public static Flight[] GetFlights()
+        public static FlightRequest[] GetFlights()
         {          
             return _flights.ToArray();
         }

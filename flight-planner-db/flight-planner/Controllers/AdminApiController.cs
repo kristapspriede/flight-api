@@ -5,8 +5,11 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
+using flight_planne.core.Models;
 using flight_planner.Attributes;
+using flight_planner.core.Models;
 using flight_planner.Models;
+using flight_planner.services;
 
 namespace flight_planner.Controllers
 {
@@ -14,12 +17,12 @@ namespace flight_planner.Controllers
     [BasicAuthentication]
     public class AdminApiController : ApiController
     {
-        
-        private Random _random;
+
+        private readonly FlightService _flightService;
         public AdminApiController()
         {
-            _random = new Random();
-            
+            _flightService = new FlightService();
+
         }
         // GET: api/AdminApi
         public IEnumerable<string> Get()
@@ -33,11 +36,11 @@ namespace flight_planner.Controllers
         [Route("admin-api/flights/{id}")]
         public async Task <HttpResponseMessage> Get(HttpRequestMessage request, int id)
         {
-            var flight = FlightStorage.GetFlightById(id);
-            if (flight == null)
-            {
-                return request.CreateResponse(HttpStatusCode.NotFound, flight);
-            }
+            var flight = _flightService.GetFlightById(id);
+            //if (flight == null)
+            //{
+            //    return request.CreateResponse(HttpStatusCode.NotFound, flight);
+            //}
             return request.CreateResponse(HttpStatusCode.NotFound, flight);
         }
 
@@ -50,19 +53,43 @@ namespace flight_planner.Controllers
         // PUT: api/AdminApi/5
         [HttpPut]
         [Route("admin-api/flights")]
-        public async Task <HttpResponseMessage> AddFlight(HttpRequestMessage request, Flight flight)
+        public async Task<HttpResponseMessage> AddFlight(HttpRequestMessage request, FlightRequest flight)
         {
             if (!IsValid(flight))
             {
                 return request.CreateResponse(HttpStatusCode.BadRequest, flight);
             }
-            flight.Id = FlightStorage.GetId();
+            flight.Id = _flightService.GetId();
             if (!FlightStorage.AddFlight(flight))
             {
                 return request.CreateResponse(HttpStatusCode.Conflict, flight);
             }
-            FlightStorage.AddFlight(flight);
-            return request.CreateResponse(HttpStatusCode.Created, flight);
+            
+
+            var domainFlight = new Flight
+            {
+                From = new Airport
+                {
+                    AirportCode = flight.From.Airport,
+                    City = flight.From.City,
+                    Country = flight.From.Country
+                },
+                To = new Airport
+                {
+                    AirportCode = flight.To.Airport,
+                    City = flight.To.City,
+                    Country = flight.To.Country
+                },
+                ArrivalTime = flight.ArrivalTime,
+                Id = flight.Id,
+                DepartureTime = flight.DepartureTime,
+                Carrier = flight.Carrier
+
+            };
+            domainFlight = await _flightService.AddFlight(domainFlight);
+            return request.CreateResponse(HttpStatusCode.Created, domainFlight);
+
+
         }
 
         // DELETE: api/AdminApi/5
@@ -74,7 +101,7 @@ namespace flight_planner.Controllers
             return request.CreateResponse(HttpStatusCode.OK);
             
         }
-        private bool IsValid(Flight flight)
+        private bool IsValid(FlightRequest flight)
         {
             //PROBLEM
             return (!string.IsNullOrEmpty(flight.ArrivalTime) &&
@@ -91,15 +118,23 @@ namespace flight_planner.Controllers
                    !string.IsNullOrEmpty(airport.City) &&
                    !string.IsNullOrEmpty(airport.Country);
         }
+        
+        [HttpPut]
+        [Route("admin-api/flight")]
+        public async Task<ICollection<Flight>> GetFlights()
+        {
+
+            return await _flightService.GetFlights();
+        }
         private bool isDifferentAirport(AirportRequest airportFrom, AirportRequest airportTo)
         {
             return airportFrom.Airport.ToLowerInvariant().Trim() != (airportTo.Airport.ToLowerInvariant()) &&
                    airportFrom.City.ToLowerInvariant().Trim() != (airportTo.City.ToLowerInvariant());
-                   //airportFrom.Country.ToLowerInvariant().Trim() != (airportTo.Country.ToLowerInvariant());
+
         }
         private bool ValidateDates(string departure, string arrival)
         {
-            if(!string.IsNullOrEmpty(departure)&& !string.IsNullOrEmpty(arrival))
+            if (!string.IsNullOrEmpty(departure) && !string.IsNullOrEmpty(arrival))
             {
                 var arrivalDate = DateTime.Parse(arrival);
                 var departureDate = DateTime.Parse(departure);
