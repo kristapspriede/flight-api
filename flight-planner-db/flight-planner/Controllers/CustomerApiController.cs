@@ -23,62 +23,18 @@ namespace flight_planner.Controllers
             _flightService = new FlightService();
 
         }
-        protected Flight ConvertFlightToDomain(FlightRequest flightRequest)
-        {
-            return new Flight
-            {
-                Id = flightRequest.Id,
-                To = ConvertAirportToDomain(flightRequest.To),
-                From = ConvertAirportToDomain(flightRequest.From),
-                Carrier = flightRequest.Carrier,
-                ArrivalTime = flightRequest.ArrivalTime,
-                DepartureTime = flightRequest.DepartureTime
-            };
-        }
-
-        private Airport ConvertAirportToDomain(AirportRequest airportRequest)
-        {
-            return new Airport
-            {
-                City = airportRequest.City,
-                Country = airportRequest.Country,
-                AirportCode = airportRequest.Airport
-            };
-        }
-        private FlightRequest ConvertFlightFromDomain(Flight flight)
-        {
-            return new FlightRequest()
-            {
-                Id = flight.Id,
-                To = ConvertAirportFromDomain(flight.To),
-                From = ConvertAirportFromDomain(flight.From),
-                Carrier = flight.Carrier,
-                ArrivalTime = flight.ArrivalTime,
-                DepartureTime = flight.DepartureTime
-            };
-        }
-
-        private AirportRequest ConvertAirportFromDomain(Airport airport)
-        {
-            return new AirportRequest()
-            {
-                City = airport.City,
-                Country = airport.Country,
-                Airport = airport.AirportCode
-            };
-        }
-        // GET: api/CustomerApi
         [HttpGet]
         [Route("api/FlightSearchRequest/{id}")]
-
-        public async Task <HttpResponseMessage> Get(HttpRequestMessage request, int id)
+        
+        public async Task<IHttpActionResult> Get(int id)
         {
-            var flight = _flightService.GetFlightById(id);
+            var flight = await _flightService.GetFlightById(id);
             if (flight == null)
             {
-                request.CreateResponse(HttpStatusCode.NotFound);
+               return Ok(flight);
+                
             }
-            return request.CreateResponse(HttpStatusCode.OK, flight);
+            return NotFound();
         }
 
         public IEnumerable<string> Get()
@@ -91,20 +47,19 @@ namespace flight_planner.Controllers
         [Route("api/airports")]
         public async Task<IHttpActionResult> GetAirports(string search)
         {
-            var airports = await _flightService.GetAirports();
+            var airports = await _flightService.SearchAirports(search);
             var result = new HashSet<AirportRequest>();
             airports.ToList().ForEach(a =>
             {
-                result.Add(ConvertAirportFromDomain(a));
-                
+                result.Add(ConvertAirportToAirportRequest(a));
+
             });
-            return Ok(result.Where(a => a.Airport.ToLower().Contains(search.ToLower().Trim()) ||
-                                         a.City.ToLower().Contains(search.ToLower().Trim()) ||
-                                        a.Country.ToLower().Contains(search.ToLower().Trim()))
+            return Ok(result
+                .Where(a => a.Airport.ToLower().Contains(search.ToLower().Trim()) &&
+                            a.City.ToLower().Contains(search.ToLower().Trim()) &&
+                            a.Country.ToLower().Contains(search.ToLower().Trim()))
                 .ToArray());
         }
-
-        
 
         // POST: api/CustomerApi
         [HttpPost]
@@ -120,11 +75,13 @@ namespace flight_planner.Controllers
                                                      DateTime.Parse(search.DepartureDate)).DistinctBy(f => f.Carrier).ToList();
                 var response = new FlightSearchResult
                 {
-                    TotalItems = result.Count,
+                    TotalItems = matchedItems.Count,
                     Items = matchedItems,
                     Page = matchedItems.Any() ? 1 : 0
                 };
                 return Ok(response);
+            
+            
         }
 
 
@@ -134,21 +91,23 @@ namespace flight_planner.Controllers
         }
         private bool IsValid(FlightSearchRequest search)
         {
-            return search != null && !string.IsNullOrEmpty(search.From) && 
+            return search != null && !string.IsNullOrEmpty(search.From) &&
                                      !string.IsNullOrEmpty(search.To) &&
                                      !string.IsNullOrEmpty(search.DepartureDate);
         }
 
         [HttpGet]
         [Route("api/flights/{id}")]
-        public async Task<HttpResponseMessage> FlightSearchById(HttpRequestMessage request, int id)
+        public async Task<IHttpActionResult> FlightSearchById(int id)
         {
-            var flight = _flightService.GetFlightById(id);
-            //if (flight == null)
-            //{
-            //    return request.CreateResponse(HttpStatusCode.NotFound);
-            //}
-            return request.CreateResponse(HttpStatusCode.OK, flight);
+            var flight = await _flightService.GetFlightById(id);
+            if (flight == null)
+            {
+                return NotFound();
+                
+            }
+            return Ok(flight);
+            
         }
 
 
@@ -160,6 +119,28 @@ namespace flight_planner.Controllers
         // DELETE: api/CustomerApi/5
         public void Delete(int id)
         {
+        }
+        protected FlightRequest convertFlightToFlightRequest(Flight flight)
+        {
+            return new FlightRequest
+            {
+                Id = flight.Id,
+                To = ConvertAirportToAirportRequest(flight.To),
+                From = ConvertAirportToAirportRequest(flight.From),
+                Carrier = flight.Carrier,
+                ArrivalTime = flight.ArrivalTime,
+                DepartureTime = flight.DepartureTime
+            };
+        }
+
+        private AirportRequest ConvertAirportToAirportRequest(Airport airport)
+        {
+            return new AirportRequest
+            {
+                City = airport.City,
+                Country = airport.Country,
+                Airport = airport.AirportCode
+            };
         }
     }
 }

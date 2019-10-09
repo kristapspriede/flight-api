@@ -10,6 +10,7 @@ using flight_planner.Attributes;
 using flight_planner.core.Models;
 using flight_planner.Models;
 using flight_planner.services;
+using Nest;
 
 namespace flight_planner.Controllers
 {
@@ -34,14 +35,15 @@ namespace flight_planner.Controllers
 
         [HttpGet]
         [Route("admin-api/flights/{id}")]
-        public async Task <HttpResponseMessage> Get(HttpRequestMessage request, int id)
+        public async Task<HttpResponseMessage> Get(HttpRequestMessage request, int id)
         {
-            var flight = _flightService.GetFlightById(id);
-            //if (flight == null)
-            //{
-            //    return request.CreateResponse(HttpStatusCode.NotFound, flight);
-            //}
+            var flight = await _flightService.GetFlightById(id);
+            if (flight == null)
+            {
+                return request.CreateResponse(HttpStatusCode.NotFound, flight);
+            }
             return request.CreateResponse(HttpStatusCode.NotFound, flight);
+            
         }
 
         // POST: api/AdminApi
@@ -55,61 +57,42 @@ namespace flight_planner.Controllers
         [Route("admin-api/flights")]
         public async Task<HttpResponseMessage> AddFlight(HttpRequestMessage request, FlightRequest flight)
         {
-            if (!IsValid(flight))
-            {
-                return request.CreateResponse(HttpStatusCode.BadRequest, flight);
-            }
-            flight.Id = _flightService.GetId();
-            if (!FlightStorage.AddFlight(flight))
-            {
-                return request.CreateResponse(HttpStatusCode.Conflict, flight);
-            }
             
-
-            var domainFlight = new Flight
+            if (IsValid(ConvertFlightRequestToFlight(flight)) )
             {
-                From = new Airport
-                {
-                    AirportCode = flight.From.Airport,
-                    City = flight.From.City,
-                    Country = flight.From.Country
-                },
-                To = new Airport
-                {
-                    AirportCode = flight.To.Airport,
-                    City = flight.To.City,
-                    Country = flight.To.Country
-                },
-                ArrivalTime = flight.ArrivalTime,
-                Id = flight.Id,
-                DepartureTime = flight.DepartureTime,
-                Carrier = flight.Carrier
-
-            };
-            domainFlight = await _flightService.AddFlight(domainFlight);
-            return request.CreateResponse(HttpStatusCode.Created, domainFlight);
-
+                var domainFlight = await _flightService.AddFlight(ConvertFlightRequestToFlight(flight));
+                return request.CreateResponse(HttpStatusCode.Created, domainFlight);
+            }
+            return request.CreateResponse(HttpStatusCode.BadRequest, flight);
+            //flight.Id = FlightStorage.GetId();
+            //if (!FlightStorage.AddFlight(flight))
+            //{
+            //    return request.CreateResponse(HttpStatusCode.Conflict, flight);
+            //}
+            //FlightStorage.AddFlight(flight);
 
         }
 
         // DELETE: api/AdminApi/5
         [HttpDelete]
         [Route("admin-api/flights/{id}")]
-        public async Task <HttpResponseMessage> Delete(HttpRequestMessage request, int id)
+        public async Task<HttpResponseMessage> Delete(HttpRequestMessage request, int id)
         {
-            FlightStorage.RemoveFlightById(id);
+            _flightService.DeleteFlightById(id);
             return request.CreateResponse(HttpStatusCode.OK);
-            
+
         }
-        private bool IsValid(FlightRequest flight)
+        private bool IsValid(Flight flight)
         {
-            //PROBLEM
-            return (!string.IsNullOrEmpty(flight.ArrivalTime) &&
-                    !string.IsNullOrEmpty(flight.DepartureTime) &&
-                    !string.IsNullOrEmpty(flight.Carrier) &&
-                    IsValidAirport(flight.From) && IsValidAirport(flight.To) && 
-                    ValidateDates(flight.DepartureTime, flight.ArrivalTime) &&
-                    isDifferentAirport(flight.From, flight.To)); 
+            var domainFlight = convertFlightToFlightRequest(flight);
+            return (!string.IsNullOrEmpty(domainFlight.ArrivalTime) &&
+                    !string.IsNullOrEmpty(domainFlight.DepartureTime) &&
+                    !string.IsNullOrEmpty(domainFlight.Carrier) &&
+                    IsValidAirport(domainFlight.From) && IsValidAirport(domainFlight.To) &&
+                    ValidateDates(domainFlight.DepartureTime, domainFlight.ArrivalTime) &&
+                    isDifferentAirport(domainFlight.From, domainFlight.To));
+
+
         }
         private bool IsValidAirport(AirportRequest airport)
         {
@@ -118,19 +101,11 @@ namespace flight_planner.Controllers
                    !string.IsNullOrEmpty(airport.City) &&
                    !string.IsNullOrEmpty(airport.Country);
         }
-        
-        [HttpPut]
-        [Route("admin-api/flight")]
-        public async Task<ICollection<Flight>> GetFlights()
-        {
-
-            return await _flightService.GetFlights();
-        }
         private bool isDifferentAirport(AirportRequest airportFrom, AirportRequest airportTo)
         {
             return airportFrom.Airport.ToLowerInvariant().Trim() != (airportTo.Airport.ToLowerInvariant()) &&
                    airportFrom.City.ToLowerInvariant().Trim() != (airportTo.City.ToLowerInvariant());
-
+            
         }
         private bool ValidateDates(string departure, string arrival)
         {
@@ -144,5 +119,51 @@ namespace flight_planner.Controllers
             }
             return false;
         }
+        protected Flight ConvertFlightRequestToFlight(FlightRequest flightRequest)
+        {
+            return new Flight
+            {
+                Id = flightRequest.Id,
+                To = ConvertAirportRequestToAirport(flightRequest.To),
+                From = ConvertAirportRequestToAirport(flightRequest.From),
+                Carrier = flightRequest.Carrier,
+                ArrivalTime = flightRequest.ArrivalTime,
+                DepartureTime = flightRequest.DepartureTime
+            };
+        }
+
+        private Airport ConvertAirportRequestToAirport(AirportRequest airportRequest)
+        {
+            return new Airport
+            {
+                City = airportRequest.City,
+                Country = airportRequest.Country,
+                AirportCode = airportRequest.Airport
+            };
+        }
+        protected FlightRequest convertFlightToFlightRequest(Flight flight)
+        {
+            return new FlightRequest
+            {
+                Id = flight.Id,
+                To = ConvertAirportToAirportRequest(flight.To),
+                From = ConvertAirportToAirportRequest(flight.From),
+                Carrier = flight.Carrier,
+                ArrivalTime = flight.ArrivalTime,
+                DepartureTime = flight.DepartureTime
+            };
+        }
+
+        private AirportRequest ConvertAirportToAirportRequest(Airport airport)
+        {
+            return new AirportRequest
+            {
+                City = airport.City,
+                Country = airport.Country,
+                Airport = airport.AirportCode
+            };
+        }
+
+
     }
 }
