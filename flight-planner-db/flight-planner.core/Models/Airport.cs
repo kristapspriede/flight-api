@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
-namespace flight_planne.core.Models
+namespace flight_planner.core.Models
 {
     public class Airport
     {
@@ -11,18 +11,5 @@ namespace flight_planne.core.Models
         public string Country { get; set; }
         public string City { get; set; }
         public string AirportCode { get; set; }
-
-
-
-        //public override bool Equals(object obj)
-        //{
-        //    var airport = obj as Airport;
-        //    if (airport == null)
-        //        return false;
-        //    return airport.AirportCode == AirportCode &&
-        //           airport.City == City &&
-        //           airport.Country == Country;
-
-        //}
     }
 }

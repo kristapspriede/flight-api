@@ -15,11 +15,7 @@ namespace flight_planner.Models
         {
             _flights = new SynchronizedCollection<FlightRequest>();
             _id = 1;
-
         }
-        
-
-
         public static bool AddFlight(FlightRequest flight)
         {
             lock (obj) {
@@ -30,7 +26,6 @@ namespace flight_planner.Models
                 }
                 return false;
             }
-               
         }
         public static void RemoveFlight(FlightRequest flight)
         {

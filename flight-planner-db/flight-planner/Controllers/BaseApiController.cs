@@ -4,8 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
-using flight_planne.core.Models;
-using flight_planner.core.Models;
 using flight_planner.Models;
 
 namespace flight_planner.Controllers

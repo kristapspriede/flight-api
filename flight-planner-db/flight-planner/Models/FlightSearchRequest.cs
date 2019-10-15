@@ -11,5 +11,11 @@ namespace flight_planner.Models
         public string To { get; set; }
         public string DepartureTime { get; set; }
         public string DepartureDate{ get; set; }
+        public FlightSearchRequest(string from, string to, string departureDate)
+        {
+            this.From = from;
+            this.To = to;
+            this.DepartureDate = departureDate;
+        }
     }
 }

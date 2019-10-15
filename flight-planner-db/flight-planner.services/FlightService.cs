@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using flight_planne.core.Models;
 using flight_planner.core.Models;
+using flight_planner.core.Services;
 using flight_planner.data;
 
 
@@ -14,7 +15,7 @@ namespace flight_planner.services
 {
     public class FlightService
     {
-
+        private static readonly Object obj = new Object(); 
         public async Task<ICollection<Flight>> GetFlights()
         {
             using (var context = new FlightPlannerDbContext())
@@ -27,8 +28,7 @@ namespace flight_planner.services
         {
             using (var context = new FlightPlannerDbContext())
             {
-                return await context.Airports.Include(a => a.AirportCode).Include(a => a.City).Include(a => a.Country)
-                    .ToListAsync();
+                return await context.Airports.ToListAsync();
             }
         }
 
@@ -37,9 +37,14 @@ namespace flight_planner.services
         {
             using (var context = new FlightPlannerDbContext())
             {
-                flight = context.Flights.Add(flight);
-                await context.SaveChangesAsync();
-                return flight;
+                
+                    if (!Exists(flight))
+                    {
+                        flight = context.Flights.Add(flight);
+                        await context.SaveChangesAsync();
+                    }
+
+                    return flight;
             }
         }
 
@@ -47,9 +52,17 @@ namespace flight_planner.services
         {
             using (var context = new FlightPlannerDbContext())
             {
-                var flight = await context.Flights.Include(f => f.To).Include(f => f.From)
-                    .SingleOrDefaultAsync(f => f.Id == id);
-                return flight;
+                var flight = await context.Flights.Include(f => f.To).Include(f => f.From).SingleOrDefaultAsync(f => f.Id == id);
+                    return flight;
+            }
+        }
+        public async Task DeleteFlight(Flight flight)
+        {
+            using (var context = new FlightPlannerDbContext())
+            {
+                context.Flights.Attach(flight);
+                    context.Flights.Remove(flight);
+                    await context.SaveChangesAsync();
             }
         }
 
@@ -64,43 +77,49 @@ namespace flight_planner.services
                 return await query.ToListAsync();
             }
         }
-        public async Task<Flight> DeleteFlightById(int id)
+        public async Task<bool> DeleteFlightById(int id)
         {
+           
+                using (var context = new FlightPlannerDbContext())
+                {
+                    var flight = await context.Flights.SingleOrDefaultAsync(f => f.Id == id);
+                if (flight != null)
+                {
+                    context.Flights.Remove(flight);
+                    await context.SaveChangesAsync();
+                }
 
+                return true;
+                }
+            
+        }
+        public static bool Exists(Flight flight)
+        {
             using (var context = new FlightPlannerDbContext())
             {
-                var flight = await context.Flights.Include(f => f.To).Include(f => f.From).SingleOrDefaultAsync(f => f.Id == id);
-                var to = flight.To;
-                var from = flight.From;
+                return context.Flights.Any(f =>
+                        //f.Id == flight.Id &&
+                        f.From.AirportCode == flight.From.AirportCode &&
+                        f.From.City == flight.From.City &&
+                        f.From.Country == flight.From.Country &&
+                        f.To.AirportCode == flight.To.AirportCode &&
+                        f.To.City == flight.To.City &&
+                        f.To.Country == flight.To.Country &&
+                        f.Carrier == flight.Carrier &&
+                        f.ArrivalTime == flight.ArrivalTime &&
+                        f.DepartureTime == flight.DepartureTime);
 
-                context.Flights.Remove(flight);
-                context.Airports.Remove(to); //???
-                context.Airports.Remove(from);
-                //???
+            }
+        }
+        public static async Task<bool> DeleteFlights()
+        {
+            using (var context = new FlightPlannerDbContext())
+            {
+                context.Flights.RemoveRange(context.Flights);
+                context.Airports.RemoveRange(context.Airports);
                 await context.SaveChangesAsync();
-                return flight;
+                return true;
             }
         }
-        public async Task<bool> Exists(Flight flight)
-        {
-            using (var context = new FlightPlannerDbContext())
-            {
-                var domainflight = context.Flights.Any(f => f.Carrier == flight.Carrier && f.ArrivalTime == flight.ArrivalTime && f.DepartureTime == flight.DepartureTime);
-                if (domainflight)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-                
-            }
-        }
-
-
-
-
-
     }
 }

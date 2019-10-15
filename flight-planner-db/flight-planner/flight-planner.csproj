@@ -279,6 +279,10 @@
       <Project>{ae3b6590-a176-45d8-9498-5bef35ae500d}</Project>
       <Name>flight-planner.core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\flight-planner.data\flight-planner.data.csproj">
+      <Project>{2F6706CD-D0DB-46C1-A692-DB3984A90530}</Project>
+      <Name>flight-planner.data</Name>
+    </ProjectReference>
     <ProjectReference Include="..\flight-planner.services\flight-planner.services.csproj">
       <Project>{0f182edc-6cc1-414f-ac98-b06b699465af}</Project>
       <Name>flight-planner.services</Name>

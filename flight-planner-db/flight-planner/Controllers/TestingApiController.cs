@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using System.Threading.Tasks;
+using flight_planner.services;
 
 namespace flight_planner.Controllers
 {
@@ -13,10 +14,10 @@ namespace flight_planner.Controllers
     {
         [HttpPost]
         [Route("testing-api/clear")]
-        public async Task<HttpResponseMessage> Clear(HttpRequestMessage request)
+        public async Task<bool> Clear()
         {
-            FlightStorage.ClearList();
-            return request.CreateResponse(HttpStatusCode.OK, true);
+            await FlightService.DeleteFlights();
+            return true;
         }
         [HttpPost]
         [Route("testing-api/")]
