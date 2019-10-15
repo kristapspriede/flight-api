@@ -5,7 +5,7 @@ using System.Web;
 
 namespace flight_planner.core.Models
 {
-    public class Airport
+    public class Airport : Entity
     {
         public int Id { get; set; }
         public string Country { get; set; }

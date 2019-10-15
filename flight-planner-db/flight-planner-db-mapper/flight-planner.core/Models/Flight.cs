@@ -6,7 +6,7 @@ using flight_planner.core.Models;
 
 namespace flight_planner.core.Models
 {
-    public class Flight
+    public class Flight : Entity
     {
         public int Id { get; set; }
         public Airport To { get; set; }

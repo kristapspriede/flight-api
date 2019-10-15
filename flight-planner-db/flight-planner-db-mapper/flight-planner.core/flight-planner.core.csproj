@@ -48,9 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Interfaces\IEntity.cs" />
     <Compile Include="Models\Airport.cs" />
+    <Compile Include="Models\Entity.cs" />
     <Compile Include="Models\Flight.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\IAirportService.cs" />
+    <Compile Include="Services\IDbService.cs" />
+    <Compile Include="Services\IEntityService.cs" />
+    <Compile Include="Services\IFlightService.cs" />
     <Compile Include="Services\ServicesResult.cs" />
   </ItemGroup>
   <ItemGroup>

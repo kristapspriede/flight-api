@@ -13,15 +13,15 @@ using flight_planner.data;
 
 namespace flight_planner.services
 {
-    public class FlightService
+    public class FlightService : EntityService<Flight>, IFlightService
     {
-        private static readonly Object obj = new Object(); 
-        public async Task<ICollection<Flight>> GetFlights()
+        public FlightService(IFlightPlannerDbContext context) : base(context)
         {
-            using (var context = new FlightPlannerDbContext())
-            {
-                return await context.Flights.Include(f => f.To).Include(f => f.From).ToListAsync();
-            }
+
+        }
+        public async Task<IEnumerable<Flight>> GetFlights()
+        {
+            return await Task.FromResult(Get());
         }
 
         public async Task<ICollection<Airport>> GetAirports()
@@ -33,37 +33,25 @@ namespace flight_planner.services
         }
 
 
-        public async Task<Flight> AddFlight(Flight flight)
+        public async Task<ServicesResult> AddFlight(Flight flight)
         {
-            using (var context = new FlightPlannerDbContext())
+            if (await FlightExists(flight))
             {
-                
-                    if (!Exists(flight))
-                    {
-                        flight = context.Flights.Add(flight);
-                        await context.SaveChangesAsync();
-                    }
-
-                    return flight;
+                return new ServicesResult(false);
             }
+
+            return Create(flight);
         }
 
         public async Task<Flight> GetFlightById(int id)
         {
-            using (var context = new FlightPlannerDbContext())
-            {
-                var flight = await context.Flights.Include(f => f.To).Include(f => f.From).SingleOrDefaultAsync(f => f.Id == id);
-                    return flight;
-            }
+            return await GetById(id);
         }
-        public async Task DeleteFlight(Flight flight)
+        public async Task DeleteFlights()
         {
-            using (var context = new FlightPlannerDbContext())
-            {
-                context.Flights.Attach(flight);
-                    context.Flights.Remove(flight);
-                    await context.SaveChangesAsync();
-            }
+            _ctx.Flights.RemoveRange(_ctx.Flights);
+            _ctx.Airports.RemoveRange(_ctx.Airports);
+            await _ctx.SaveChangesAsync();
         }
 
         public async Task<ICollection<Airport>> SearchAirports(string search)
@@ -77,27 +65,15 @@ namespace flight_planner.services
                 return await query.ToListAsync();
             }
         }
-        public async Task<bool> DeleteFlightById(int id)
+        public async Task<ServicesResult> DeleteFlightById(int id)
         {
-           
-                using (var context = new FlightPlannerDbContext())
-                {
-                    var flight = await context.Flights.SingleOrDefaultAsync(f => f.Id == id);
-                if (flight != null)
-                {
-                    context.Flights.Remove(flight);
-                    await context.SaveChangesAsync();
-                }
-
-                return true;
-                }
-            
+            var flight = await GetById(id);
+            return flight == null ? new ServicesResult(true) : Delete(flight);
         }
-        public static bool Exists(Flight flight)
+        public async Task<bool> FlightExists(Flight flight)
         {
-            using (var context = new FlightPlannerDbContext())
-            {
-                return context.Flights.Any(f =>
+
+            return await Query().AnyAsync(f =>
                         //f.Id == flight.Id &&
                         f.From.AirportCode == flight.From.AirportCode &&
                         f.From.City == flight.From.City &&
@@ -109,17 +85,8 @@ namespace flight_planner.services
                         f.ArrivalTime == flight.ArrivalTime &&
                         f.DepartureTime == flight.DepartureTime);
 
-            }
+            
         }
-        public static async Task<bool> DeleteFlights()
-        {
-            using (var context = new FlightPlannerDbContext())
-            {
-                context.Flights.RemoveRange(context.Flights);
-                context.Airports.RemoveRange(context.Airports);
-                await context.SaveChangesAsync();
-                return true;
-            }
-        }
+        
     }
 }

@@ -7,21 +7,26 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
+using AutoMapper;
 using flight_planner.core.Models;
 using flight_planner.services;
 using flight_planner.Controllers;
-
-
+using flight_planner.core.services;
+using flight_planner.core.Services;
 
 
 namespace flight_planner.Controllers
 {
     public class CustomerApiController : ApiController
     {
-        private readonly FlightService _flightService;
-        public CustomerApiController()
+        private readonly IFlightService _flightService;
+        private readonly IAirportService _airportService;
+        private readonly IMapper _mapper;
+        public CustomerApiController(IAirportService airportService, IFlightService flightService, IMapper mapper)
         {
-            _flightService = new FlightService();
+            _airportService = airportService;
+            _flightService = flightService;
+            _mapper = mapper;
 
         }
         [HttpGet]
@@ -34,7 +39,7 @@ namespace flight_planner.Controllers
             {
                 return NotFound();
             }
-            return Ok(convertFlightToFlightRequest(flight));
+            return Ok(_mapper.Map<FlightRequest>(flight));
         }
 
         public IEnumerable<string> Get()
@@ -47,11 +52,13 @@ namespace flight_planner.Controllers
         [Route("api/airports")]
         public async Task<IHttpActionResult> GetAirports(string search)
         {
-            var airports = await _flightService.GetAirports();//SearchAirports
+
+            //return Ok(airports.Select(a => _mapper.Map<AirportRequest>(a)).ToHashSet());
+            var airports = await _airportService.GetAirports();//SearchAirports
             var result = new HashSet<AirportRequest>();
             airports.ToList().ForEach(a =>
             {
-                result.Add(ConvertAirportToAirportRequest(a));
+                result.Add(_mapper.Map<AirportRequest>(a));
 
             });
             return Ok(result
@@ -109,7 +116,7 @@ namespace flight_planner.Controllers
             {
                 return NotFound();
             }
-            return Ok(convertFlightToFlightRequest(flight));
+            return Ok(_mapper.Map<FlightRequest>(flight));
         }
         // PUT: api/CustomerApi/5
         public void Put(int id, [FromBody]string value)
@@ -119,27 +126,6 @@ namespace flight_planner.Controllers
         public void Delete(int id)
         {
         }
-        protected FlightRequest convertFlightToFlightRequest(Flight flight)
-        {
-            return new FlightRequest
-            {
-                Id = flight.Id,
-                To = ConvertAirportToAirportRequest(flight.To),
-                From = ConvertAirportToAirportRequest(flight.From),
-                Carrier = flight.Carrier,
-                ArrivalTime = flight.ArrivalTime,
-                DepartureTime = flight.DepartureTime
-            };
-        }
-
-        private AirportRequest ConvertAirportToAirportRequest(Airport airport)
-        {
-            return new AirportRequest
-            {
-                City = airport.City,
-                Country = airport.Country,
-                Airport = airport.AirportCode
-            };
-        }
+        
     }
 }

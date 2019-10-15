@@ -5,8 +5,10 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
+using AutoMapper;
 using flight_planner.core.Models;
 using flight_planner.Attributes;
+using flight_planner.core.Services;
 using flight_planner.data;
 using flight_planner.Models;
 using flight_planner.services;
@@ -18,14 +20,15 @@ namespace flight_planner.Controllers
     [BasicAuthentication]
     public class AdminApiController : ApiController
     {
-        
-        private readonly FlightService _flightService;
-        public AdminApiController()
-        {
-            _flightService = new FlightService();
 
+        private readonly IMapper _mapper;
+        private readonly IFlightService _flightService;
+        public AdminApiController(IFlightService flightService, IMapper mapper)
+        {
+            _flightService = flightService;
+            _mapper = mapper;
         }
-        
+
         // GET: api/AdminApi
         public IEnumerable<string> Get()
         {
@@ -38,49 +41,41 @@ namespace flight_planner.Controllers
         public async Task<IHttpActionResult> GetFlights()
         {
             var flights = await _flightService.GetFlights();
-            return Ok(flights.Select(convertFlightToFlightRequest));
+            return Ok(flights.Select(f => _mapper.Map<FlightRequest>(f)).ToList());
         }
         [HttpGet]
         [Route("admin-api/flights/{id}")]
-        public async Task<HttpResponseMessage> Get(HttpRequestMessage request, int id)
+        public async Task<IHttpActionResult> Get(int id)
         {
             var flight = await _flightService.GetFlightById(id);
             if (flight == null)
             {
-                return request.CreateResponse(HttpStatusCode.NotFound, flight);
+                return NotFound();
             }
-            return request.CreateResponse(HttpStatusCode.OK, flight);
+            return Ok(_mapper.Map<FlightRequest>(flight));
 
         }
-
         // POST: api/AdminApi
         public void Post([FromBody]string value)
         {
         }
-
-
         // PUT: api/AdminApi/5
         [HttpPut]
         [Route("admin-api/flights")]
-        public async Task<HttpResponseMessage> AddFlight(HttpRequestMessage request, FlightRequest flight)
+        public async Task<IHttpActionResult> AddFlight(FlightRequest flight)
         {
             if (!IsValid(flight))
             {
-                return request.CreateResponse(HttpStatusCode.BadRequest, flight);
+                return BadRequest();
             }
-            var doExists = ConvertFlightRequestToFlight(flight);
-            if (FlightService.Exists(doExists))
+            var result = await _flightService.AddFlight(_mapper.Map<Flight>(flight));
+
+            if (!result.Succeeded)
             {
-                return request.CreateResponse(HttpStatusCode.Conflict);
+                return Conflict();
             }
-            else
-            {
-                var addFlight = ConvertFlightRequestToFlight(flight);
-                addFlight = await _flightService.AddFlight(addFlight);
-                //flight.Id = addFlight.Id;
-                flight = convertFlightToFlightRequest(addFlight);
-                return request.CreateResponse(HttpStatusCode.Created, flight);
-            }
+            flight.Id = result.Entity.Id;
+            return Created(string.Empty, flight);
         }
         // DELETE: api/AdminApi/5
         [HttpDelete]
@@ -122,52 +117,6 @@ namespace flight_planner.Controllers
             }
             return false;
         }
-        protected Flight ConvertFlightRequestToFlight(FlightRequest flightRequest)
-        {
-            return new Flight
-            {
-                Id = flightRequest.Id,
-                To = ConvertAirportRequestToAirport(flightRequest.To),
-                From = ConvertAirportRequestToAirport(flightRequest.From),
-                Carrier = flightRequest.Carrier,
-                ArrivalTime = flightRequest.ArrivalTime,
-                DepartureTime = flightRequest.DepartureTime
-            };
-        }
-
-        private Airport ConvertAirportRequestToAirport(AirportRequest airportRequest)
-        {
-            return new Airport
-            {
-                City = airportRequest.City,
-                Country = airportRequest.Country,
-                AirportCode = airportRequest.Airport
-            };
-        }
-        protected FlightRequest convertFlightToFlightRequest(Flight flight)
-        {
-            return new FlightRequest
-            {
-                Id = flight.Id,
-                To = ConvertAirportToAirportRequest(flight.To),
-                From = ConvertAirportToAirportRequest(flight.From),
-                Carrier = flight.Carrier,
-                ArrivalTime = flight.ArrivalTime,
-                DepartureTime = flight.DepartureTime
-            };
-        }
-
-        private AirportRequest ConvertAirportToAirportRequest(Airport airport)
-        {
-            return new AirportRequest
-            {
-                City = airport.City,
-                Country = airport.Country,
-                Airport = airport.AirportCode
-            };
-        }
         
-
-
     }
 }
