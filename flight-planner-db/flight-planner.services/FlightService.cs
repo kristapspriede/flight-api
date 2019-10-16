@@ -7,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using flight_planner.core.Models;
-using flight_planner.core.Services;
 using flight_planner.data;
 
 
@@ -15,7 +14,6 @@ namespace flight_planner.services
 {
     public class FlightService
     {
-        private static readonly Object obj = new Object(); 
         public async Task<ICollection<Flight>> GetFlights()
         {
             using (var context = new FlightPlannerDbContext())
@@ -23,7 +21,6 @@ namespace flight_planner.services
                 return await context.Flights.Include(f => f.To).Include(f => f.From).ToListAsync();
             }
         }
-
         public async Task<ICollection<Airport>> GetAirports()
         {
             using (var context = new FlightPlannerDbContext())
@@ -31,8 +28,6 @@ namespace flight_planner.services
                 return await context.Airports.ToListAsync();
             }
         }
-
-
         public async Task<Flight> AddFlight(Flight flight)
         {
             using (var context = new FlightPlannerDbContext())
@@ -47,7 +42,6 @@ namespace flight_planner.services
                     return flight;
             }
         }
-
         public async Task<Flight> GetFlightById(int id)
         {
             using (var context = new FlightPlannerDbContext())
@@ -65,7 +59,6 @@ namespace flight_planner.services
                     await context.SaveChangesAsync();
             }
         }
-
         public async Task<ICollection<Airport>> SearchAirports(string search)
         {
             search = search.ToLowerInvariant().Trim();
@@ -88,10 +81,8 @@ namespace flight_planner.services
                     context.Flights.Remove(flight);
                     await context.SaveChangesAsync();
                 }
-
                 return true;
                 }
-            
         }
         public static bool Exists(Flight flight)
         {

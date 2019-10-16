@@ -26,7 +26,6 @@ namespace flight_planner.Controllers
         }
         [HttpGet]
         [Route("api/FlightSearchRequest/{id}")]
-        
         public async Task<IHttpActionResult> Get(int id)
         {
             var flight = await _flightService.GetFlightById(id);
@@ -36,13 +35,11 @@ namespace flight_planner.Controllers
             }
             return Ok(convertFlightToFlightRequest(flight));
         }
-
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
         }
         // GET: api/CustomerApi/5
-
         [HttpGet]
         [Route("api/airports")]
         public async Task<IHttpActionResult> GetAirports(string search)
@@ -60,8 +57,6 @@ namespace flight_planner.Controllers
                             a.Country.ToLower().Contains(search.ToLower().Trim()))
                 .ToArray());
         }
-        
-
         // POST: api/CustomerApi
         [HttpPost]
         [Route("api/flights/search")]
@@ -87,8 +82,6 @@ namespace flight_planner.Controllers
                 return request.CreateResponse(HttpStatusCode.BadRequest);
             }
         }
-
-
         private bool NotSameAirport(FlightSearchRequest search)
         {
             return !string.Equals(search.From, search.To, StringComparison.InvariantCultureIgnoreCase);
@@ -99,7 +92,6 @@ namespace flight_planner.Controllers
                                      !string.IsNullOrEmpty(search.To) &&
                                      !string.IsNullOrEmpty(search.DepartureDate);
         }
-
         [HttpGet]
         [Route("api/flights/{id}")]
         public async Task<IHttpActionResult> FlightSearchById(int id)
@@ -131,7 +123,6 @@ namespace flight_planner.Controllers
                 DepartureTime = flight.DepartureTime
             };
         }
-
         private AirportRequest ConvertAirportToAirportRequest(Airport airport)
         {
             return new AirportRequest
