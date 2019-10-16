@@ -73,10 +73,6 @@ namespace flight_planner.services
             }
             
             return new ServicesResult(true);
-            
-
-
-            //return flight == null ? new ServicesResult(true) : Delete(flight);
         }
         public async Task<bool> FlightExists(Flight flight)
         {

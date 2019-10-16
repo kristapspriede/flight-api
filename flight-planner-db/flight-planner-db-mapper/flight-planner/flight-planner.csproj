@@ -214,7 +214,6 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AirportRequest.cs" />
-    <Compile Include="Controllers\BaseApiController.cs" />
     <Compile Include="Models\FlightRequest.cs" />
     <Compile Include="Models\FlightSearchRequest.cs" />
     <Compile Include="Models\FlightSearchResult.cs" />
