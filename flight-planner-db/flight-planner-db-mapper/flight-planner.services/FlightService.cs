@@ -39,7 +39,6 @@ namespace flight_planner.services
             {
                 return new ServicesResult(false);
             }
-
             return Create(flight);
         }
 
