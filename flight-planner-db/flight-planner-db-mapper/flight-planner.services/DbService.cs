@@ -38,7 +38,7 @@ namespace flight_planner.services
             {
                 throw new ArgumentNullException(nameof(entity));
             }
-            _ctx.Set<T>().Add(entity);
+            _ctx.Set<T>().Remove(entity);
             _ctx.SaveChanges();
 
             return new ServicesResult(true).Set(entity);
@@ -54,9 +54,9 @@ namespace flight_planner.services
             return Query<T>().ToList();
         }
 
-        public async virtual Task<T> GetById<T>(int id) where T : Entity//async/await
+        public virtual Task<T> GetById<T>(int id) where T : Entity//async/await
         {
-            return await _ctx.Set<T>().SingleOrDefaultAsync(e => e.Id == id);
+            return _ctx.Set<T>().SingleOrDefaultAsync(e => e.Id == id);
         }
         public virtual IQueryable<T> Query<T>() where T : Entity
         {

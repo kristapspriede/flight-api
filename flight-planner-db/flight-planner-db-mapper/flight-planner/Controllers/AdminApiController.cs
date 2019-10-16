@@ -27,6 +27,7 @@ namespace flight_planner.Controllers
         {
             _flightService = flightService;
             _mapper = mapper;
+            
         }
 
         // GET: api/AdminApi
@@ -62,20 +63,26 @@ namespace flight_planner.Controllers
         // PUT: api/AdminApi/5
         [HttpPut]
         [Route("admin-api/flights")]
-        public async Task<IHttpActionResult> AddFlight(FlightRequest flight)
+        public async Task<HttpResponseMessage> AddFlight(HttpRequestMessage request, FlightRequest flight)
         {
             if (!IsValid(flight))
             {
-                return BadRequest();
+                return request.CreateResponse(HttpStatusCode.BadRequest, flight);
             }
-            var result = await _flightService.AddFlight(_mapper.Map<Flight>(flight));
-
-            if (!result.Succeeded)
+            var doExists = _mapper.Map<Flight>(flight);
+            if (await _flightService.FlightExists(doExists))
             {
-                return Conflict();
+                return request.CreateResponse(HttpStatusCode.Conflict);
             }
-            flight.Id = result.Entity.Id;
-            return Created(string.Empty, flight);
+            
+            else
+            {
+                var addFlight = _mapper.Map<Flight>(flight);
+                var newFlight = await _flightService.AddFlight(addFlight);
+                flight.Id = newFlight.Entity.Id;
+                flight = _mapper.Map<FlightRequest>(flight);
+                return request.CreateResponse(HttpStatusCode.Created, flight);
+            }
         }
         // DELETE: api/AdminApi/5
         [HttpDelete]

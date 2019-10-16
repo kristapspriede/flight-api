@@ -7,7 +7,7 @@ namespace flight_planner.core.Models
 {
     public class Airport : Entity
     {
-        public int Id { get; set; }
+        //public int Id { get; set; }
         public string Country { get; set; }
         public string City { get; set; }
         public string AirportCode { get; set; }

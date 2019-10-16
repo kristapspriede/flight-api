@@ -67,7 +67,16 @@ namespace flight_planner.services
         public async Task<ServicesResult> DeleteFlightById(int id)
         {
             var flight = await GetById(id);
-            return flight == null ? new ServicesResult(true) : Delete(flight);
+            if (flight != null)
+            {
+                Delete(flight);
+            }
+            
+            return new ServicesResult(true);
+            
+
+
+            //return flight == null ? new ServicesResult(true) : Delete(flight);
         }
         public async Task<bool> FlightExists(Flight flight)
         {
